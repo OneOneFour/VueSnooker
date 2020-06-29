@@ -58,12 +58,20 @@ export default {
     return{
       intervalId:null,
       balls:[
-        new Ball(-15,0,100,0,"cue"),
-        new Ball,47.5,-4.5,0,0,"red"),
+        new Ball(-50,0,130,0,"cue"),
+        new Ball(40.5,0,0,0,"red"),
+        new Ball(47.5,-4.5,0,0,"red"),
         new Ball(47.5,4.5,0,0,"yellow"),
-        new Ball()
+        new Ball(55,0,0,0,"black"),
+        new Ball(55,-8.5,0,0,"yellow"),
+        new Ball(55,8.5,0,0,"red"),
+        new Ball(62.5,-13,0,0,"red"),
+        new Ball(62.5,-4.5,0,0,"yellow"),
+        new Ball(62.5,4.5,0,0,"red"),
+        new Ball(62.5,13,0,0,"yellow"),
+        
       ],
-      restitutionCoeff:0.92,
+      restitutionCoeff:0.92, 
       staticFriction: 10,
       ballRadius:4,
       frictionCoeff:0.005 // I looked up this is the actual friction coeff of a pool table!
@@ -83,7 +91,6 @@ export default {
     physicsSimulate(){
       let frameCount = 0; 
       this.intervalId = setInterval(function(){
-        let col =false;
         if(this.balls.filter( x=> !x.stationary()).length == 0){
            clearInterval(this.intervalId);
             this.intervalId = null;
@@ -102,7 +109,8 @@ export default {
             let Vy = (ball.vy + otherBall.vy)/2;
             let initAngle = Math.atan2(Vy,Vx);
             let b = Math.sqrt(1 - Math.pow((otherBall.x - ball.x)*Vx + Vy*(otherBall.y - ball.y),2)/(distance*distance*(Math.pow(Vx,2) + Math.pow(Vy,2))));
-            let impactAngle = Math.asin(b) * Math.sign(otherBall.y - ball.y);
+            let impactAngle = (isNaN(b))? 0 : Math.asin(b) * Math.sign(otherBall.y - ball.y);
+            
             let u1x = ball.vx - Vx;
             let u2x = otherBall.vx - Vx;
             let u1y = ball.vy - Vy;
@@ -111,6 +119,8 @@ export default {
             otherBall.vx = Vx -u2x*this.restitutionCoeff*Math.cos(impactAngle - initAngle) + u2y*this.restitutionCoeff*Math.sin(impactAngle - initAngle);
             ball.vy = Vy - u1x*this.restitutionCoeff*Math.sin(impactAngle - initAngle) - u1y*this.restitutionCoeff*Math.cos(impactAngle - initAngle);
             otherBall.vy = Vy - u2x*this.restitutionCoeff*Math.sin(impactAngle - initAngle) - u2y*this.restitutionCoeff*Math.cos(impactAngle - initAngle);
+            
+            // Mark collisions as resolved
             ball.collided.push(otherBall);
             otherBall.collided.push(ball);
           }
@@ -131,19 +141,17 @@ export default {
           ball.vx -= ((this.frictionCoeff)*ball.vx + this.staticFriction)*Math.cos(angle)*(1/60);
           ball.vy -= ((this.frictionCoeff)*ball.vy + this.staticFriction)*Math.sin(angle)*(1/60); 
           // Update position
+
           ball.x += ball.vx * (1/60);
           ball.y += ball.vy * (1/60);
+          
 
           if(ball.stationary()){
             ball.vx = 0;
             ball.vy = 0;
           }
         }
-        for(let ball of this.balls) {
-          ball.collided = ball.collided
-                                  .filter(otherBall=>Math.pow(otherBall.x - ball.x,2) + Math.pow(otherBall.y - ball.y,2) < 4*this.ballRadius*this.ballRadius);
-       }
-      if(col) console.log(this.balls[0].collided);
+      
       frameCount++;
       }.bind(this),1000/60); // 60FPS
     }
