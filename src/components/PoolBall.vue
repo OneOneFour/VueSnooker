@@ -1,5 +1,7 @@
 <template>
-    <circle :r=radius :fill="fill" :cx=x :cy=y />
+    <g> 
+        <circle :r=radius :fill="fill" :cx=x :cy=y></circle>
+    </g>
 </template>
 <script>
 export default {
@@ -7,7 +9,8 @@ export default {
         x:Number,
         y:Number,
         type:String,
-        radius:Number
+        radius:Number,
+        id:Number,
     },
     computed:{
         fill(){

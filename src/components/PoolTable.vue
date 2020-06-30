@@ -1,7 +1,7 @@
 <template>
     <g>
         <image :width=size :height="height"  xlink:href="../assets/table.svg" :x=x :y=y /> 
-        <pool-ball v-for="(ball,i) in balls" :x="toTableX(ball.x)" :y="toTableY(ball.y)" :type="ball.type" :key="i" :radius="radius" />
+        <pool-ball v-for="ball in balls" :x="toTableX(ball.x)" :y="toTableY(ball.y)" :type="ball.type" :key="ball.id" :radius="radius" :id="ball.id"/>
     </g>
 </template>
 <script>
