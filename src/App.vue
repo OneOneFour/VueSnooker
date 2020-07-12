@@ -1,13 +1,14 @@
 <template>
   <div id="app" tabindex=-1>
-    <h1> Awesome Pool</h1>
-    <svg width=700 height=400  >
-      <pool-table :balls=balls :x="0" :y="0" :size="700" :ballRadius="ballRadius"/>
+    <svg :width="pageWidth" :height="pageHeight" @mousemove="mouseMove" @mousedown="enableCue" @mouseup="disableCue">
+      <pool-table :balls=balls :x="centerX" :y="centerY" :size="size" :ballRadius="ballRadius" :simulating="intervalId != null"/>
     </svg>
   </div>
 </template>
 
 <script>
+import {cueBus} from './cueBus.js';
+
 //GLOBAL CONSTANTS
 const pocketRadius =6;
 function checkPocket(x,y){
@@ -17,7 +18,7 @@ function checkPocket(x,y){
   }else if(x > 50){
     return nearestPocketCheck(x,y,105, (y>0)? 54: -54);
   }else{
-    return nearestPocketCheck(x,y, 0, (y>0)? 60: -60);
+    return nearestPocketCheck(x,y, 0, (y>0)? 57: -57);
   }
 }
 
@@ -53,6 +54,18 @@ export default {
   mounted(){
     this.physicsSimulate();
     window.addEventListener("keydown",this.pause);
+    cueBus.$on("ballStrike",function(velocity,angle){
+      this.cue.vx = -Math.sin(angle/180 * Math.PI)*velocity;
+      this.cue.vy = -Math.cos(angle/180 * Math.PI)*velocity;
+      this.freePositionCue = false;
+      this.physicsSimulate();
+    }.bind(this));
+
+    cueBus.$on('dragBall',function(payload){
+      if(this.freePositionCue){
+        this.cue.y = payload.y;
+      }
+    }.bind(this));
   },
   destroyed(){
     window.removeEventListener("keydown",this.pause);
@@ -60,8 +73,9 @@ export default {
   data(){
     return{
       intervalId:null,
+      size:700,
       balls:[
-        new Ball(0,-60,0,200,0,"cue"),
+        new Ball(0,-60,0,0,0,"cue"),
         new Ball(16,40,0,0,0,"red",true),
         new Ball(15,48,-4.5,0,0,"red",true),
         new Ball(14,48,4.5,0,0,"yellow",true),
@@ -80,9 +94,10 @@ export default {
         
       ],
       restitutionCoeff:0.9, 
-      staticFriction: 8,
+      staticFriction: 10,
       ballRadius:3.5,
-      frictionCoeff:0.005 // I looked up this is the actual friction coeff of a pool table!
+      freePositionCue:false,
+      frictionCoeff:0.01 // I looked up this is the actual friction coeff of a pool table!
     }
   },
   methods:{
@@ -96,20 +111,25 @@ export default {
         }
       }
     },
+
     physicsSimulate(){
-      let frameCount = 0; 
       //let col = false;
       this.intervalId = setInterval(function(){
         
         if(this.balls.filter( x=> !x.stationary()).length == 0){
            clearInterval(this.intervalId);
             this.intervalId = null;
-             console.log(frameCount)
+            if(this.balls[0].type !== 'cue'){
+              //Spawn new cue in the middle 
+              this.balls = [new Ball(0,-60,0,0,0,"cue")].conat(this.balls)
+              this.freePositionCue = true;
+            }
         }
         for(let ball of this.balls){
           // Check if intersecting a pocket
           if(checkPocket(ball.x,ball.y)){
             ball.deleteThisFrame=true;
+            
             continue;
           }
           // Check if intersecting another ball
@@ -178,9 +198,23 @@ export default {
                               .filter(otherBall=>Math.pow(otherBall.x - ball.x,2) + Math.pow(otherBall.y - ball.y,2) < 4*this.ballRadius*this.ballRadius);
         }
         this.balls = this.balls.filter(x=>!x.deleteThisFrame);
-  
-      frameCount++;
+
       }.bind(this),1000/60); // 60FPS
+      
+    },
+    mouseMove(e){
+      cueBus.$emit('mouseMove',{
+        cueX:this.balls[0].x,
+        cueY:this.balls[0].y,
+        mouseOffsetX:e.clientX,
+        mouseOffsetY:e.clientY
+      });
+    },
+    enableCue(){
+      cueBus.$emit("enableCue");
+    },
+    disableCue(){
+      cueBus.$emit("disableCue");
     }
   },
   computed:{
@@ -192,6 +226,21 @@ export default {
     },
     momentumY(){
       return Math.round(this.balls.reduce((acc,x) => acc + x.vy , 0));
+    },
+    pageWidth(){
+      return window.innerWidth;
+    },
+    pageHeight(){
+      return window.innerHeight;
+    },
+    centerX(){
+      return (this.pageWidth - this.size)/2;
+    },
+    centerY(){
+      return (this.pageHeight - this.size/2)/2;
+    },
+    cue(){
+      return this.balls[0];
     }
   }
 }
@@ -205,5 +254,18 @@ export default {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+
+}
+#app > h1{
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+svg {
+  position: absolute;
+  left:0;
+  top:0;
+  z-index: -1;
 }
 </style>

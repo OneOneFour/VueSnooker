@@ -1,18 +1,22 @@
 <template>
-    <g>
+    <g >
         <image :width=size :height="height"  xlink:href="../assets/table.svg" :x=x :y=y /> 
         <pool-ball v-for="ball in balls" :x="toTableX(ball.x)" :y="toTableY(ball.y)" :type="ball.type" :key="ball.id" :radius="radius" :id="ball.id"/>
+        <pool-cue v-if="!simulating" :ballRadius="radius" />
     </g>
 </template>
 <script>
 const offsetFrac = (19/137);
 const totalRatio = 1.7466;
 import PoolBall from "./PoolBall.vue";
+import PoolCue from "./PoolCue.vue";
 export default {
     components:{
-        PoolBall
+        PoolBall,
+        PoolCue
     },
     props:{
+        simulating:Boolean,
         balls:Array,
         x:Number,
         y:Number,

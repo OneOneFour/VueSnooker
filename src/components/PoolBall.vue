@@ -1,9 +1,10 @@
 <template>
     <g> 
-        <circle :r=radius :fill="fill" :cx=x :cy=y></circle>
+        <circle :r=radius :fill="fill" :cx=x :cy=y @mousedown="dragBall" @mouseup="releaseBall" @mousemove="trackBall"></circle>
     </g>
 </template>
 <script>
+import {cueBus} from '../cueBus.js';
 export default {
     props:{
         x:Number,
@@ -11,6 +12,27 @@ export default {
         type:String,
         radius:Number,
         id:Number,
+    },
+    data(){
+        return{
+            draggingBall:false
+        }
+    },
+    methods:{
+        dragBall(){
+            this.draggingBall = true;
+        },
+        releaseBall(){
+            this.draggingBall = false;
+        },
+        trackBall({clientX,clientY}){
+            if(this.draggingBall && this.type === "cue"){
+                cueBus.$emit('dragCue',{
+                    x:this.$parent.toTableX(clientX),
+                    y:this.$parent.toTableY(clientY)
+                });
+            }
+        }
     },
     computed:{
         fill(){
