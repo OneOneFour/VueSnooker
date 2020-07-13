@@ -1,6 +1,6 @@
 <template>
     <g> 
-        <circle :r=radius :fill="fill" :cx=x :cy=y @mousedown="dragBall" @mouseup="releaseBall" @mousemove="trackBall"></circle>
+        <circle :r=radius :fill="fill" :cx=x :cy=y @mousedown.stop="dragBall" @mouseup.stop="releaseBall" @mousemove.stop="trackBall"></circle>
     </g>
 </template>
 <script>
@@ -25,11 +25,11 @@ export default {
         releaseBall(){
             this.draggingBall = false;
         },
-        trackBall({clientX,clientY}){
+        trackBall({pageY}){
             if(this.draggingBall && this.type === "cue"){
+                console.log(pageY);
                 cueBus.$emit('dragCue',{
-                    x:this.$parent.toTableX(clientX),
-                    y:this.$parent.toTableY(clientY)
+                    y:this.$parent.toBallY(pageY)
                 });
             }
         }

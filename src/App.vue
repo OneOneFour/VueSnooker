@@ -1,8 +1,9 @@
 <template>
   <div id="app" tabindex=-1>
     <svg :width="pageWidth" :height="pageHeight" @mousemove="mouseMove" @mousedown="enableCue" @mouseup="disableCue">
-      <pool-table :balls=balls :x="centerX" :y="centerY" :size="size" :ballRadius="ballRadius" :simulating="intervalId != null"/>
+      <pool-table :balls=balls :x="centerX" :y="centerY" :size="size" :ballRadius="ballRadius" :showCue="intervalId == null && !freePositionCue" />
     </svg>
+    <button v-if="freePositionCue" @click="freePositionCue=false">Cue position OK?</button>
   </div>
 </template>
 
@@ -57,11 +58,11 @@ export default {
     cueBus.$on("ballStrike",function(velocity,angle){
       this.cue.vx = -Math.sin(angle/180 * Math.PI)*velocity;
       this.cue.vy = -Math.cos(angle/180 * Math.PI)*velocity;
-      this.freePositionCue = false;
+      this.freePositionCue = false; // Just to be sure.
       this.physicsSimulate();
     }.bind(this));
 
-    cueBus.$on('dragBall',function(payload){
+    cueBus.$on('dragCue',function(payload){
       if(this.freePositionCue){
         this.cue.y = payload.y;
       }
@@ -75,7 +76,7 @@ export default {
       intervalId:null,
       size:700,
       balls:[
-        new Ball(0,-60,0,0,0,"cue"),
+        new Ball(0,-52,0,0,0,"cue"),
         new Ball(16,40,0,0,0,"red",true),
         new Ball(15,48,-4.5,0,0,"red",true),
         new Ball(14,48,4.5,0,0,"yellow",true),
@@ -121,7 +122,7 @@ export default {
             this.intervalId = null;
             if(this.balls[0].type !== 'cue'){
               //Spawn new cue in the middle 
-              this.balls = [new Ball(0,-60,0,0,0,"cue")].conat(this.balls)
+              this.balls = [new Ball(0,-52,0,0,0,"cue")].concat(this.balls)
               this.freePositionCue = true;
             }
         }

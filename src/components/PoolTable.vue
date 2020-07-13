@@ -2,7 +2,7 @@
     <g >
         <image :width=size :height="height"  xlink:href="../assets/table.svg" :x=x :y=y /> 
         <pool-ball v-for="ball in balls" :x="toTableX(ball.x)" :y="toTableY(ball.y)" :type="ball.type" :key="ball.id" :radius="radius" :id="ball.id"/>
-        <pool-cue v-if="!simulating" :ballRadius="radius" />
+        <pool-cue v-if="showCue" :ballRadius="radius" />
     </g>
 </template>
 <script>
@@ -16,7 +16,7 @@ export default {
         PoolCue
     },
     props:{
-        simulating:Boolean,
+        showCue:Boolean,
         balls:Array,
         x:Number,
         y:Number,
@@ -30,6 +30,9 @@ export default {
         },
         toTableY(ballY){
              return this.y + this.tableHeight/2 + (ballY/50)*this.tableHeight/2 + this.boundaryWidth;
+        },
+        toBallY(eY){
+            return 100*(eY - this.y - this.boundaryWidth - this.tableHeight/2)/this.tableHeight;
         }
     },
     computed:{
